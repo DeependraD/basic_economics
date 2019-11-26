@@ -1,0 +1,9 @@
+book_filename: "basic_economics"
+delete_merged_file: true
+language:
+  ui:
+    chapter_name: "Chapter "
+#dput(stringr::str_split_fixed(list.files(pattern = ".Rmd"), c("-"), 2)[,2])
+rmd_files:
+  html:
+  latex: ["index.Rmd", "body.Rmd"]

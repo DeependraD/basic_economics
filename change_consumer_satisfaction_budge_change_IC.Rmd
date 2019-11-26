@@ -1,0 +1,85 @@
+---
+title: "ggplot2 indifference"
+author: "Deependra Dhakal"
+date: "7/23/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+``` {r}
+library(tidyverse)
+
+# Download this from https://github.com/andrewheiss/econw18.classes.andrewheiss.com/blob/master/lib/graphics.R
+source("../scripts/graphics.R")
+
+# Create functions
+budget <- function(x) 50 - (2 * x)
+budget_new <- function(x) 50 - x
+budget_shifted <- function(x) 35.5 - x
+utility <- function(x, good_x, good_y, adj = 0) sqrt(good_x * good_y)^2 / x + adj
+
+# Annotations for the plot
+# It'd be better to figure these out mathematically using the functions, but ¯\_(ツ)_/¯
+points_to_show <- tribble(
+  ~x,   ~y,  ~label,
+  12.5, 25,  "A",
+  22,   28,  "B",
+  17.5, 18,  "C"
+)
+
+effects <- tibble(x_start = c(filter(points_to_show, label == "A") %>% pull(x),
+                                  filter(points_to_show, label == "C") %>% pull(x),
+                                  filter(points_to_show, label == "A") %>% pull(x)),
+                      x_end = c(filter(points_to_show, label == "C") %>% pull(x),
+                                filter(points_to_show, label == "B") %>% pull(x),
+                                filter(points_to_show, label == "B") %>% pull(x)),
+                      label = c("SE", "IE", "TE"),
+                      y = c(12, 8, 4))
+
+# Plot everything
+ggplot(data = points_to_show, aes(x = x, y = y)) +
+  stat_function(data = tibble(x = 0:60), inherit.aes = FALSE,
+                aes(x = x, color = "Original budget", size = "Original budget"), 
+                fun = budget) +
+  stat_function(data = tibble(x = 0:25), inherit.aes = FALSE,
+                aes(x = x, color = "New budget", size = "New budget"),
+                fun = budget_new) +
+  stat_function(data = tibble(x = 0:25), inherit.aes = FALSE,
+                aes(x = x), color = "grey70", linetype = "dashed",
+                size = 0.5, fun = budget_shifted) +
+  stat_function(data = tibble(x = 1:25), inherit.aes = FALSE,
+                aes(x = x, color = "Original indifference", size = "Original indifference"), 
+                fun = utility, args = list(good_x = 12.5, good_y = 25)) +
+  stat_function(data = tibble(x = 1:25), inherit.aes = FALSE,
+                aes(x = x, color = "New indifference", size = "New indifference"),
+                fun = utility, args = list(good_x = 15.5, good_y = 30, adj = 7)) +
+  geom_segment(aes(xend = x, yend = 0), 
+               size = 1, color = nord_yellow, linetype = "dotted") +
+  geom_point(size = 2) + 
+  geom_text(aes(label = label), hjust = "left", nudge_x = 1, size = 6) +
+  geom_segment(data = effects, aes(x = x_start, xend = x_end, y = y, yend = y)) +
+  geom_text(data = effects, aes(x = (x_start + x_end) / 2, y = y, label = label),
+            vjust = 1.3) +
+  scale_x_continuous(expand = c(0, 0)) + 
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_color_manual(values = c("Original budget" = nord_green, 
+                                "New budget" = nord_orange, 
+                                "Original indifference" = nord_dk_blue, 
+                                "New indifference" = nord_lt_blue), 
+                     guide = guide_legend(reverse = TRUE), name = NULL) +
+  scale_size_manual(values = c("Original budget" = 2.5, 
+                               "New budget" = 2.5, 
+                               "Original indifference" = 1, 
+                               "New indifference" = 1), 
+                    guide = guide_legend(reverse = TRUE), name = NULL) +
+  coord_equal(xlim = c(0, 50), ylim = c(0, 50)) +
+  labs(x = "Good X", y = "Good Y") +
+  theme_econ(axis_line = TRUE) +
+  theme(panel.grid = element_blank(),
+        legend.position = "bottom")
+```
+
+![](https://i.imgur.com/NAkGGW9.png)
